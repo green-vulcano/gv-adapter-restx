@@ -187,7 +187,7 @@ public class RestCallOperation implements CallOperation {
     				params = GVBufferPropertiesHelper.getPropertiesMapSO(gvBuffer, true);
     			}
     			
-    			return PropertiesHandler.expand(entry, params, gvBuffer);
+    			return PropertiesHandler.expand(entry, params, gvBuffer.getObject());
     		} catch (Exception exception) {
     			logger.error("Error formatting value: "+entry, exception);
     		}

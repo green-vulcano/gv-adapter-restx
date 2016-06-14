@@ -86,9 +86,14 @@ public class RestCallOperation implements CallOperation {
             
             fillMap(XMLConfig.getNodeList(node, "./headers/header"), headers);
             fillMap(XMLConfig.getNodeList(node, "./parameters/param"), params);
-                       
-            body = XMLConfig.getNode(node, "./body").getTextContent();
-                      
+            
+            Node bodyNode =  XMLConfig.getNode(node, "./body");
+            if (Objects.nonNull(bodyNode)) { 
+            	body = bodyNode.getTextContent();
+            } else {
+            	body = null;
+            }
+            
             logger.debug("init - loaded parameters: url= " + url + " - method= " + method );
             logger.debug("Init stop");
       

@@ -31,6 +31,8 @@ import it.greenvulcano.gvesb.virtual.OperationKey;
 import it.greenvulcano.util.metadata.PropertiesHandler;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -124,7 +126,8 @@ public class RestCallOperation implements CallOperation {
 	           		 .collect(Collectors.joining("&", "?", ""));
 	           logger.debug("Calling url "+expandedUrl+querystring); 
 	           URL requestUrl = new URL(expandedUrl+querystring);
-	           final HttpURLConnection httpURLConnection = (HttpURLConnection) requestUrl.openConnection();
+	           
+	           HttpURLConnection httpURLConnection = (HttpURLConnection) requestUrl.openConnection();
 	           httpURLConnection.setRequestMethod(method);
 	           httpURLConnection.setConnectTimeout(connectionTimeout);
 	           httpURLConnection.setReadTimeout(readTimeout);
@@ -151,6 +154,21 @@ public class RestCallOperation implements CallOperation {
 	           
 	           httpURLConnection.connect();	          
 	           
+	           InputStream responseStream = null;
+	           
+	           try {
+	        	   httpURLConnection.getResponseCode();
+	        	   responseStream = httpURLConnection.getInputStream();
+	           } catch (IOException connectionFail) {
+	        	   responseStream = httpURLConnection.getErrorStream();
+	           }           
+	           
+	           InputStreamReader contentReader = new InputStreamReader(responseStream, "UTF-8");	       	   
+        	   BufferedReader bufferedReader = new BufferedReader(contentReader);
+	     
+	       	   String response = bufferedReader.lines().collect(Collectors.joining("\n"));	       		       	   
+	       	   gvBuffer.setObject(response);	           
+	           
 	           gvBuffer.setProperty(RESPONSE_STATUS, "" + httpURLConnection.getResponseCode());
 	           gvBuffer.setProperty(RESPONSE_MESSAGE, httpURLConnection.getResponseMessage());
 	           
@@ -161,11 +179,7 @@ public class RestCallOperation implements CallOperation {
 	           	   }
 	           }	           
 	           
-        	   InputStreamReader contentReader = new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8");	       	   
-        	   BufferedReader bufferedReader = new BufferedReader(contentReader);
-	     
-	       	   String response = bufferedReader.lines().collect(Collectors.joining("\n"));	       		       	   
-	       	   gvBuffer.setObject(response);	       	   
+	           httpURLConnection.disconnect();       	   
            
         } catch (Exception exc) {
             throw new CallException("GV_CALL_SERVICE_ERROR", new String[][]{{"service", gvBuffer.getService()},

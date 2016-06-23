@@ -132,14 +132,19 @@ public class RestCallOperation implements CallOperation {
 	           httpURLConnection.setConnectTimeout(connectionTimeout);
 	           httpURLConnection.setReadTimeout(readTimeout);
 	           
-	           headers.entrySet().stream()           					 	
-	           					 .forEach(header-> {
-	           						String k = formatter.format(header.getKey());
-	           						String v = formatter.format(header.getValue());
-	           						httpURLConnection.setRequestProperty(k, v);
-	           					 });
-	          
-	           
+	          	           
+	           for (Entry<String,String> header : headers.entrySet()) {
+					String k = formatter.format(header.getKey());
+					String v = formatter.format(header.getValue());
+					httpURLConnection.setRequestProperty(k, v);
+					
+					if ("content-type".equalsIgnoreCase(k) && 
+						"application/x-www-form-urlencoded".equalsIgnoreCase(v)) {
+						body = querystring.substring(0);
+					}
+					
+	           }
+	                     
 	           if (Objects.nonNull(body) && body.length()>0) {       
 	        	   
 	        	   String expandedBody = formatter.format(body);

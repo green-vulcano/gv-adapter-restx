@@ -4,7 +4,7 @@
 		
 	<feature name="gvrestx" description="GreenVulcano REST plugin" version="${project.version}">		  
 				
-		<feature>gvengine</feature>
+		<feature prerequisite="true">gvengine</feature>
 		<bundle start-level="96">mvn:it.greenvulcano.gvesb.adapter/gvrestx/${project.version}</bundle>		
 	</feature>
 	

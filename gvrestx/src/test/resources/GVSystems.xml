@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GVSystems name="SYSTEMS" type="module">
+	<Systems>
+
+		<System id-system="test" system-activation="on">
+			
+			<Channel id-channel="test-rest-call" type="RESTAdapter" enabled="true"
+				endpoint="http://localhost:8888">
+
+				<rest-call name="simple-call" type="call" method="GET"
+					request-uri="/test">
+
+				</rest-call>
+				
+				<rest-call name="params-call" type="call" method="GET"
+					request-uri="/testparams">
+					
+					<parameters>
+						<param name="to" value="@{{PARAM_1}}"/>
+						<param name="from" value="@{{PARAM_2}}"/>
+					</parameters>
+
+				</rest-call>
+
+			</Channel>
+			
+			<Channel id-channel="test-rest-call-default" type="RESTAdapter" enabled="true"
+				endpoint="http://localhost:8888">
+
+				<rest-call-defaults>
+					
+					<headers>
+						<header name="Content-Type" value="text/plain"/>
+						<header name="X-custom-header" value="custom"/>
+					</headers>
+					
+					<parameters>
+						<param name="token" value="@{{PARAM_TOKEN}}"/>						
+					</parameters>					
+					
+
+				</rest-call-defaults>
+
+
+				<rest-call name="simple-default" type="call" method="GET"
+					request-uri="/testdefault">
+				</rest-call>
+				
+				<rest-call name="simple-override" type="call" method="GET"
+					request-uri="/testdefault">
+					<headers/>
+					<parameters/>
+				</rest-call>
+				
+			</Channel>
+
+		</System>
+	</Systems>
+</GVSystems>
+	  

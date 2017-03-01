@@ -20,6 +20,7 @@
 package it.greenvulcano.gvesb.virtual.rest;
 
 import it.greenvulcano.configuration.XMLConfig;
+import it.greenvulcano.configuration.XMLConfigException;
 import it.greenvulcano.gvesb.buffer.GVBuffer;
 import it.greenvulcano.gvesb.internal.data.GVBufferPropertiesHelper;
 import it.greenvulcano.gvesb.virtual.CallException;
@@ -31,6 +32,7 @@ import it.greenvulcano.gvesb.virtual.OperationKey;
 import it.greenvulcano.util.metadata.PropertiesHandler;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,13 +40,21 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.KeyStore;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
@@ -68,6 +78,10 @@ public class RestCallOperation implements CallOperation {
     
     private int connectionTimeout,readTimeout;
     
+    private String truststorePath = null;
+    private String truststorePassword = null;
+    private String truststoreAlgorithm = null;
+       
     private Map<String, String> headers = new LinkedHashMap<>();
     private Map<String, String> params = new LinkedHashMap<>();
     
@@ -85,16 +99,20 @@ public class RestCallOperation implements CallOperation {
             url = host.concat(uri);        
             connectionTimeout = XMLConfig.getInteger(node, "@conn-timeout", 3000);
             readTimeout = XMLConfig.getInteger(node, "@so-timeout", 6000);
-            
-            fillMap(XMLConfig.getNodeList(node, "./headers/header"), headers);
-            fillMap(XMLConfig.getNodeList(node, "./parameters/param"), params);
-            
-            Node bodyNode =  XMLConfig.getNode(node, "./body");
-            if (Objects.nonNull(bodyNode)) { 
-            	body = bodyNode.getTextContent();
-            } else {
-            	body = null;
+                             
+            Node trustStore = XMLConfig.getNode(node.getParentNode(), "./truststore");
+            if (Objects.nonNull(trustStore)) { 
+            	truststorePath = XMLConfig.get(trustStore, "@path");
+            	truststorePassword = XMLConfig.getDecrypted(trustStore, "@password", null);
+            	truststoreAlgorithm = XMLConfig.get(trustStore, "@algorithm", null);            	            	
             }
+            
+            Node defaults = XMLConfig.getNode(node.getParentNode(), "./rest-call-defaults");
+            if (Objects.nonNull(defaults)){
+            	readRestCallConfiguration(defaults);
+            }            
+            
+            readRestCallConfiguration(node);                        
             
             logger.debug("init - loaded parameters: url= " + url + " - method= " + method );
             logger.debug("Init stop");
@@ -105,14 +123,41 @@ public class RestCallOperation implements CallOperation {
         }
 
     }
+    
+    private void readRestCallConfiguration(Node node) throws XMLConfigException {
+    	if (XMLConfig.exists(node, "./headers")) {
+    		fillMap(XMLConfig.getNodeList(node, "./headers/header"), headers);
+    	}
+    	
+    	if (XMLConfig.exists(node, "./parameters")) {
+    		fillMap(XMLConfig.getNodeList(node, "./parameters/param"), params);
+    	}        
+        
+        Node bodyNode =  XMLConfig.getNode(node, "./body");
+        if (Objects.nonNull(bodyNode)) { 
+        	body = bodyNode.getTextContent();
+        } else {
+        	body = null;
+        }
+    }   
+    
+    private void fillMap(NodeList sourceNodeList, Map<String,String> destinationMap) {
+        
+    	if (sourceNodeList.getLength()==0) {
+    		destinationMap.clear();
+    	} else {    	
+		    IntStream.range(0, sourceNodeList.getLength())
+		    	.mapToObj(sourceNodeList::item)
+		    	.forEach(node->{
+		    		try {
+		    			destinationMap.put(XMLConfig.get(node, "@name"), XMLConfig.get(node, "@value"));
+		    		} catch (Exception e) {
+		    			logger.error("Fail to read configuration", e);
+		    		}
+		    	});
+    	}
+    }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * it.greenvulcano.gvesb.virtual.CallOperation#perform(it.greenvulcano.gvesb
-     * .buffer.GVBuffer)
-     */
     @Override
     public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
        
@@ -127,7 +172,14 @@ public class RestCallOperation implements CallOperation {
 	           logger.debug("Calling url "+expandedUrl+querystring); 
 	           URL requestUrl = new URL(expandedUrl+querystring);
 	           
-	           HttpURLConnection httpURLConnection = (HttpURLConnection) requestUrl.openConnection();
+	           
+	           HttpURLConnection httpURLConnection;
+	           if (truststorePath!=null && expandedUrl.startsWith("https://")) {
+	        	   httpURLConnection  = openSecureConnection(requestUrl);
+	           } else {
+	        	   httpURLConnection  = (HttpURLConnection) requestUrl.openConnection();
+	           }
+	           	            
 	           httpURLConnection.setRequestMethod(method);
 	           httpURLConnection.setConnectTimeout(connectionTimeout);
 	           httpURLConnection.setReadTimeout(readTimeout);
@@ -229,72 +281,57 @@ public class RestCallOperation implements CallOperation {
     	}
     	
 
-    }
+    }        
+    
+    private HttpsURLConnection openSecureConnection(URL url) throws Exception{
+				
+		InputStream keyStream = new FileInputStream(truststorePath);
+			
+		KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());		
+		keystore.load(keyStream, Optional.ofNullable(truststorePassword).orElse("").toCharArray());
+		
+		TrustManagerFactory trustFactory =	TrustManagerFactory.getInstance(Optional.ofNullable(truststoreAlgorithm)
+															   						.orElseGet(TrustManagerFactory::getDefaultAlgorithm));
+		trustFactory.init(keystore);
+					
+		SSLContext context = SSLContext.getInstance("TLS");
+        context.init(null, trustFactory.getTrustManagers(), null);					
+		
+        HttpsURLConnection httpsURLConnection = (HttpsURLConnection) url.openConnection();        
         
-    private void fillMap(NodeList sourceNodeList, Map<String,String> destinationMap) {
-    	        
-        IntStream.range(0, sourceNodeList.getLength())
-        	.mapToObj(sourceNodeList::item)
-        	.forEach(node->{
-        		try {
-        			destinationMap.put(XMLConfig.get(node, "@name"), XMLConfig.get(node, "@value"));
-        		} catch (Exception e) {
-        			logger.error("Error configuring headers", e);
-        		}
-        	});
-    }
+        httpsURLConnection.setSSLSocketFactory(context.getSocketFactory());
+        
+        httpsURLConnection.setHostnameVerifier(new HostnameVerifier() {      
+		    public boolean verify(String hostname, SSLSession session) {
+		        return true;
+		    }
+		});
+        
+        return httpsURLConnection;
+    }   
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.greenvulcano.gvesb.virtual.Operation#cleanUp()
-     */
     @Override
-    public void cleanUp()
-    {
+    public void cleanUp(){
+        // do nothing
+    }
+    
+    @Override
+    public void destroy(){
         // do nothing
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.greenvulcano.gvesb.virtual.Operation#destroy()
-     */
     @Override
-    public void destroy()
-    {
-        // do nothing
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * it.greenvulcano.gvesb.virtual.Operation#getServiceAlias(it.greenvulcano
-     * .gvesb.buffer.GVBuffer)
-     */
-    @Override
-    public String getServiceAlias(GVBuffer gvBuffer)
-    {
+    public String getServiceAlias(GVBuffer gvBuffer){
         return gvBuffer.getService();
     }
 
-
-    /**
-     * @see it.greenvulcano.gvesb.virtual.Operation#setKey(it.greenvulcano.gvesb.virtual.OperationKey)
-     */
     @Override
-    public void setKey(OperationKey key)
-    {
+    public void setKey(OperationKey key){
         this.key = key;
     }
-
-    /**
-     * @see it.greenvulcano.gvesb.virtual.Operation#getKey()
-     */
+    
     @Override
-    public OperationKey getKey()
-    {
+    public OperationKey getKey(){
         return key;
     }
 }

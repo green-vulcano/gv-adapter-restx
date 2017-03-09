@@ -1,2 +1,3 @@
 # gv-adapter-restx
-Extended REST Adapter for GreenVulcano
+### GreenVulcano ESB v4 REST extension 
+Support the integration of web-services HTTP providing the `rest-call` call operation

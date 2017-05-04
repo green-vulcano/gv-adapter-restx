@@ -72,6 +72,7 @@ public class RestCallOperation implements CallOperation {
     private static final String RESPONSE_MESSAGE       = "GVHTTP_RESPONSE_MESSAGE";
     private static final String RESPONSE_HEADER_PREFIX = "GVHTTP_RESPONSE_HEADER_";
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(RestCallOperation.class);
+    private String name;
     private OperationKey key = null;      
     private String url = null;
     private String method = null;
@@ -92,8 +93,9 @@ public class RestCallOperation implements CallOperation {
     {
         logger.debug("Init start");
         try {            
-                	
-        	String host = XMLConfig.get(node.getParentNode(), "@endpoint");
+            name =  XMLConfig.get(node, "@name");  	
+        	
+            String host = XMLConfig.get(node.getParentNode(), "@endpoint");
             String uri = XMLConfig.get(node, "@request-uri");
             method = XMLConfig.get(node, "@method");
             url = host.concat(uri);        
@@ -162,14 +164,19 @@ public class RestCallOperation implements CallOperation {
     public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
        
         try {
-	          final GVBufferPropertyFormatter formatter = new GVBufferPropertyFormatter(gvBuffer);
+	           final GVBufferPropertyFormatter formatter = new GVBufferPropertyFormatter(gvBuffer);
 	           
-	          String expandedUrl = formatter.format(url);
+	           String expandedUrl = formatter.format(url);
      
-			  String querystring = params.entrySet().stream()
-	           		 .map(e -> formatter.formatAndEncode(e.getKey()) + "=" + formatter.formatAndEncode(e.getValue()))	           		
-	           		 .collect(Collectors.joining("&", "?", ""));
-	           logger.debug("Calling url "+expandedUrl+querystring); 
+			   String querystring = params.isEmpty() ? "": params.entrySet().stream()
+	           		  .map(e -> formatter.formatAndEncode(e.getKey()) + "=" + formatter.formatAndEncode(e.getValue()))	           		
+	           		  .collect(Collectors.joining("&", "?", ""));
+	           
+			   StringBuffer callDump = new StringBuffer();
+	           callDump.append("Perfoming RestCallOperation "+name)
+	                   .append("\n        ")
+	                   .append("URL: "+expandedUrl+querystring);
+
 	           URL requestUrl = new URL(expandedUrl+querystring);
 	           
 	           
@@ -179,7 +186,11 @@ public class RestCallOperation implements CallOperation {
 	           } else {
 	        	   httpURLConnection  = (HttpURLConnection) requestUrl.openConnection();
 	           }
-	           	            
+	           callDump.append("\n        ").append("Method: "+method);
+	           
+	           callDump.append("\n        ").append("Connection timeout: "+connectionTimeout);
+	           callDump.append("\n        ").append("Read timeout: "+readTimeout);
+	           
 	           httpURLConnection.setRequestMethod(method);
 	           httpURLConnection.setConnectTimeout(connectionTimeout);
 	           httpURLConnection.setReadTimeout(readTimeout);
@@ -189,7 +200,7 @@ public class RestCallOperation implements CallOperation {
 					String k = formatter.format(header.getKey());
 					String v = formatter.format(header.getValue());
 					httpURLConnection.setRequestProperty(k, v);
-					
+					callDump.append("\n        ").append("Header: "+k+"="+v);
 					if ("content-type".equalsIgnoreCase(k) && 
 						"application/x-www-form-urlencoded".equalsIgnoreCase(v)) {
 						body = querystring.substring(0);
@@ -206,8 +217,11 @@ public class RestCallOperation implements CallOperation {
 	           	   outputStreamWriter.write(expandedBody);
 	           	   outputStreamWriter.flush();
 	           	   outputStreamWriter.close();
-	        	   
+	           	   callDump.append("\n        ").append("Request body: "+expandedBody);
 	           }
+	           
+	           
+	           logger.debug(callDump.toString());
 	           
 	           httpURLConnection.connect();	          
 	           

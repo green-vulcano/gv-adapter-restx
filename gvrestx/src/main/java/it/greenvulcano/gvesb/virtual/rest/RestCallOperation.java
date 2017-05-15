@@ -213,7 +213,27 @@ public class RestCallOperation implements CallOperation {
 					
 	           }
 	                     
-	           if (Objects.nonNull(body) && body.length()>0) {       
+	           if (sendGVBufferObject && gvBuffer.getObject()!=null) {
+	        	   byte[] requestData;
+	        	   if (gvBuffer.getObject() instanceof byte[]) {
+	        		   requestData = (byte[]) gvBuffer.getObject();
+	        	   } else {
+	        		   requestData = gvBuffer.getObject().toString().getBytes();
+	        		   
+	        	   }	        	   
+	        	   httpURLConnection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
+	        	   callDump.append("\n        ").append("Content-Length: "+requestData.length);
+	        	   
+	        	   httpURLConnection.setDoOutput(true);
+	        	   
+	        	   DataOutputStream dataOutputStream = new DataOutputStream(httpURLConnection.getOutputStream());        	 
+	        	   dataOutputStream.write(requestData);
+	        	   
+	        	   dataOutputStream.flush();
+	        	   dataOutputStream.close();
+	        	   
+	        	   callDump.append("\n        ").append("Request body: binary");
+	           } else if (Objects.nonNull(body) && body.length()>0) {       
 	        	   
 	        	   String expandedBody = formatter.format(body);
 	        	   httpURLConnection.setDoOutput(true);
@@ -223,26 +243,6 @@ public class RestCallOperation implements CallOperation {
 	           	   outputStreamWriter.flush();
 	           	   outputStreamWriter.close();
 	           	   callDump.append("\n        ").append("Request body: "+expandedBody);
-	           } else if (sendGVBufferObject && gvBuffer.getObject()!=null) {
-	        	   httpURLConnection.setDoOutput(true);
-	        	   
-	        	   DataOutputStream dataOutputStream = new DataOutputStream(httpURLConnection.getOutputStream());
-	        	   
-	        	   byte[] requestData;
-	        	   if (gvBuffer.getObject() instanceof byte[]) {
-	        		   requestData = (byte[]) gvBuffer.getObject();
-	        	   } else {
-	        		   requestData = gvBuffer.getObject().toString().getBytes();
-	        		   
-	        	   }
-	        	   
-	        	   httpURLConnection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
-	        	   dataOutputStream.write(requestData);
-	        	   
-	        	   dataOutputStream.flush();
-	        	   dataOutputStream.close();
-	        	   callDump.append("\n        ").append("Content-Length: "+requestData.length);
-	        	   callDump.append("\n        ").append("Request body: binary");
 	           }
 	           
 	           

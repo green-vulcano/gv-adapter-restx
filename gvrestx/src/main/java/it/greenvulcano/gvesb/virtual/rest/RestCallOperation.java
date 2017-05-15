@@ -31,12 +31,10 @@ import it.greenvulcano.gvesb.virtual.InvalidDataException;
 import it.greenvulcano.gvesb.virtual.OperationKey;
 import it.greenvulcano.util.metadata.PropertiesHandler;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -57,6 +55,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -260,21 +259,25 @@ public class RestCallOperation implements CallOperation {
 	        	   responseStream = httpURLConnection.getErrorStream();
 	           }           
 	           
-	           InputStreamReader contentReader = new InputStreamReader(responseStream, "UTF-8");	       	   
-        	   BufferedReader bufferedReader = new BufferedReader(contentReader);
-	     
-	       	   String response = bufferedReader.lines().collect(Collectors.joining("\n"));	       		       	   
-	       	   gvBuffer.setObject(response);	           
-	           
-	           gvBuffer.setProperty(RESPONSE_STATUS, "" + httpURLConnection.getResponseCode());
-	           gvBuffer.setProperty(RESPONSE_MESSAGE, httpURLConnection.getResponseMessage());
-	           
 	           for (Entry<String, List<String>> header : httpURLConnection.getHeaderFields().entrySet()){
 	           	   if(Objects.nonNull(header.getKey()) &&  Objects.nonNull(header.getValue())) {
 		        	   gvBuffer.setProperty(RESPONSE_HEADER_PREFIX.concat(header.getKey().toUpperCase()), 
 		           							header.getValue().stream().collect(Collectors.joining(";")));
 	           	   }
-	           }	           
+	           }
+	           
+	       	   byte[] responseData = IOUtils.toByteArray(responseStream);
+	           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT_TYPE"))).orElse("");
+	           if (responseContentType.startsWith("application/json")) {
+	        	   gvBuffer.setObject(new String(responseData, "UTF-8"));
+	           } else {
+	        	   gvBuffer.setObject(responseData);   
+	           }	       	   	           
+	           
+	           gvBuffer.setProperty(RESPONSE_STATUS, "" + httpURLConnection.getResponseCode());
+	           gvBuffer.setProperty(RESPONSE_MESSAGE, httpURLConnection.getResponseMessage());
+	           
+	          	           
 	           
 	           httpURLConnection.disconnect();       	   
            

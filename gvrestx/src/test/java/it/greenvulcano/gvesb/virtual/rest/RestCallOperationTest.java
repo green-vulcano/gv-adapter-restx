@@ -46,7 +46,7 @@ public class RestCallOperationTest {
 				
 		Assert.assertNull(gvbuffer.getObject());		
 		callOperation.perform(gvbuffer);
-		Assert.assertEquals("Test response", gvbuffer.getObject());
+		Assert.assertEquals("Test response",new String((byte[]) gvbuffer.getObject()));
 		
 	}
 	
@@ -67,7 +67,7 @@ public class RestCallOperationTest {
 		
 		Assert.assertNull(gvbuffer.getObject());		
 		callOperation.perform(gvbuffer);
-		Assert.assertEquals("Test params to:value1 from:value2", gvbuffer.getObject());
+		Assert.assertEquals("Test params to:value1 from:value2", new String((byte[]) gvbuffer.getObject()));
 		
 	}
 	
@@ -86,7 +86,7 @@ public class RestCallOperationTest {
 		Assert.assertNull(gvbuffer.getObject());		
 		callOperation.perform(gvbuffer);
 		
-		Assert.assertEquals("Default param:"+token+" Default header:custom", gvbuffer.getObject());
+		Assert.assertEquals("Default param:"+token+" Default header:custom", new String((byte[]) gvbuffer.getObject()));
 		
 		
 	}
@@ -105,7 +105,7 @@ public class RestCallOperationTest {
 				
 		Assert.assertNull(gvbuffer.getObject());		
 		callOperation.perform(gvbuffer);
-		Assert.assertEquals("Default param:null Default header:null", gvbuffer.getObject());
+		Assert.assertEquals("Default param:null Default header:null", new String((byte[]) gvbuffer.getObject()));
 		
 	}
 	

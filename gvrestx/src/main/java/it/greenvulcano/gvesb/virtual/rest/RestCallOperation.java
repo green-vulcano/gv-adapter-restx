@@ -32,6 +32,7 @@ import it.greenvulcano.gvesb.virtual.OperationKey;
 import it.greenvulcano.util.metadata.PropertiesHandler;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,6 +88,8 @@ public class RestCallOperation implements CallOperation {
     private Map<String, String> params = new LinkedHashMap<>();
     
     private String body;
+    
+    private boolean sendGVBufferObject = false;
    
     @Override
     public void init(Node node) throws InitializationException
@@ -137,6 +140,9 @@ public class RestCallOperation implements CallOperation {
         
         Node bodyNode =  XMLConfig.getNode(node, "./body");
         if (Objects.nonNull(bodyNode)) { 
+        	
+        	sendGVBufferObject = Boolean.valueOf(XMLConfig.get(bodyNode, "@gvbuffer-object", "false"));
+        	
         	body = bodyNode.getTextContent();
         } else {
         	body = null;
@@ -218,6 +224,26 @@ public class RestCallOperation implements CallOperation {
 	           	   outputStreamWriter.flush();
 	           	   outputStreamWriter.close();
 	           	   callDump.append("\n        ").append("Request body: "+expandedBody);
+	           } else if (sendGVBufferObject && gvBuffer.getObject()!=null) {
+	        	   httpURLConnection.setDoOutput(true);
+	        	   
+	        	   DataOutputStream dataOutputStream = new DataOutputStream(httpURLConnection.getOutputStream());
+	        	   
+	        	   byte[] requestData;
+	        	   if (gvBuffer.getObject() instanceof byte[]) {
+	        		   requestData = (byte[]) gvBuffer.getObject();
+	        	   } else {
+	        		   requestData = gvBuffer.getObject().toString().getBytes();
+	        		   
+	        	   }
+	        	   
+	        	   httpURLConnection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
+	        	   dataOutputStream.write(requestData);
+	        	   
+	        	   dataOutputStream.flush();
+	        	   dataOutputStream.close();
+	        	   callDump.append("\n        ").append("Content-Length: "+requestData.length);
+	        	   callDump.append("\n        ").append("Request body: binary");
 	           }
 	           
 	           

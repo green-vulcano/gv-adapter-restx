@@ -172,18 +172,24 @@ public class RestCallOperation implements CallOperation {
 	           final GVBufferPropertyFormatter formatter = new GVBufferPropertyFormatter(gvBuffer);
 	           
 	           String expandedUrl = formatter.format(url);
-     
-			   String querystring = params.isEmpty() ? "": params.entrySet().stream()
-	           		  .map(e -> formatter.formatAndEncode(e.getKey()) + "=" + formatter.formatAndEncode(e.getValue()))	           		
-	           		  .collect(Collectors.joining("&", "?", ""));
+	           String querystring = "";
 	           
-			   StringBuffer callDump = new StringBuffer();
+	           if (!params.isEmpty()) {
+
+				    querystring =  params.entrySet().stream()
+		           		  .map(e -> formatter.formatAndEncode(e.getKey()) + "=" + formatter.formatAndEncode(e.getValue()))	           		
+		           		  .collect(Collectors.joining("&"));	
+	        	   
+	        	   expandedUrl = expandedUrl.concat("?").concat(querystring);
+	           } 
+	        	  
+	           StringBuffer callDump = new StringBuffer();
 	           callDump.append("Perfoming RestCallOperation "+name)
 	                   .append("\n        ")
-	                   .append("URL: "+expandedUrl+querystring);
-
-	           URL requestUrl = new URL(expandedUrl+querystring);
+	                   .append("URL: ")
+	                   .append(expandedUrl);
 	           
+	           URL requestUrl = new URL(expandedUrl);	           
 	           
 	           HttpURLConnection httpURLConnection;
 	           if (truststorePath!=null && expandedUrl.startsWith("https://")) {
@@ -208,7 +214,7 @@ public class RestCallOperation implements CallOperation {
 					callDump.append("\n        ").append("Header: "+k+"="+v);
 					if ("content-type".equalsIgnoreCase(k) && 
 						"application/x-www-form-urlencoded".equalsIgnoreCase(v)) {
-						body = querystring.substring(0);
+						body = querystring;
 					}
 					
 	           }

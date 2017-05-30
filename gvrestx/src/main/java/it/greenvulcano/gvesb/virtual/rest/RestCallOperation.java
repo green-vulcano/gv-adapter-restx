@@ -273,7 +273,7 @@ public class RestCallOperation implements CallOperation {
 	           }
 	           
 	       	   byte[] responseData = IOUtils.toByteArray(responseStream);
-	           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT_TYPE"))).orElse("");
+	           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT-TYPE"))).orElse("");
 	           if (responseContentType.startsWith("application/json")) {
 	        	   gvBuffer.setObject(new String(responseData, "UTF-8"));
 	           } else {

@@ -184,7 +184,7 @@ public class RestCallOperation implements CallOperation {
 	           } 
 	        	  
 	           StringBuffer callDump = new StringBuffer();
-	           callDump.append("Perfoming RestCallOperation "+name)
+	           callDump.append("Performing RestCallOperation "+name)
 	                   .append("\n        ")
 	                   .append("URL: ")
 	                   .append(expandedUrl);
@@ -229,6 +229,8 @@ public class RestCallOperation implements CallOperation {
 	        	   }	        	   
 	        	   httpURLConnection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
 	        	   callDump.append("\n        ").append("Content-Length: "+requestData.length);
+	        	   callDump.append("\n        ").append("Request body: binary");
+	        	   logger.debug(callDump.toString());
 	        	   
 	        	   httpURLConnection.setDoOutput(true);
 	        	   
@@ -236,23 +238,22 @@ public class RestCallOperation implements CallOperation {
 	        	   dataOutputStream.write(requestData);
 	        	   
 	        	   dataOutputStream.flush();
-	        	   dataOutputStream.close();
+	        	   dataOutputStream.close();	        	   
 	        	   
-	        	   callDump.append("\n        ").append("Request body: binary");
 	           } else if (Objects.nonNull(body) && body.length()>0) {       
 	        	   
 	        	   String expandedBody = formatter.format(body);
+	        	   callDump.append("\n        ").append("Request body: "+expandedBody);
+	        	   logger.debug(callDump.toString());
+	        	   
 	        	   httpURLConnection.setDoOutput(true);
 	        	   
 	        	   OutputStreamWriter outputStreamWriter = new OutputStreamWriter(httpURLConnection.getOutputStream());
 	           	   outputStreamWriter.write(expandedBody);
 	           	   outputStreamWriter.flush();
 	           	   outputStreamWriter.close();
-	           	   callDump.append("\n        ").append("Request body: "+expandedBody);
+	           	   
 	           }
-	           
-	           
-	           logger.debug(callDump.toString());
 	           
 	           httpURLConnection.connect();	          
 	           

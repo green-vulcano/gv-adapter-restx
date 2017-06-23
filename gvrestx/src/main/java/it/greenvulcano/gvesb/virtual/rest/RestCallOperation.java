@@ -272,14 +272,21 @@ public class RestCallOperation implements CallOperation {
 		           							header.getValue().stream().collect(Collectors.joining(";")));
 	           	   }
 	           }
-	           
-	       	   byte[] responseData = IOUtils.toByteArray(responseStream);
-	           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT-TYPE"))).orElse("");
-	           if (responseContentType.startsWith("application/json")) {
-	        	   gvBuffer.setObject(new String(responseData, "UTF-8"));
-	           } else {
-	        	   gvBuffer.setObject(responseData);   
-	           }	       	   	           
+	          
+	           if (responseStream!=null) {
+	        	   
+	        	   byte[] responseData = IOUtils.toByteArray(responseStream);
+		           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT-TYPE"))).orElse("");
+		           
+		           if (responseContentType.startsWith("application/json") || responseContentType.startsWith("application/javascript") ) {
+		        	   gvBuffer.setObject(new String(responseData, "UTF-8"));
+		           } else {
+		        	   gvBuffer.setObject(responseData);   
+		           }
+				
+	           } else { // No content
+	        	   gvBuffer.setObject(null);
+	           }
 	           
 	           gvBuffer.setProperty(RESPONSE_STATUS, "" + httpURLConnection.getResponseCode());
 	           gvBuffer.setProperty(RESPONSE_MESSAGE, httpURLConnection.getResponseMessage());

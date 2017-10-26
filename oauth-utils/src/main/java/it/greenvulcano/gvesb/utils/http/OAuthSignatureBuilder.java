@@ -93,15 +93,25 @@ public class OAuthSignatureBuilder {
 			    mac.init(spec);
 			    byte[] byteHMAC = mac.doFinal(signatureBase.getBytes());
 		
-			    return Base64.getEncoder().encodeToString(byteHMAC);
+			    return URLEncoder.encode(Base64.getEncoder().encodeToString(byteHMAC), "UTF-8").replace("+", "%20");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			
 			return null;
-		}
-		
-	}
+		}	
 	
+		public String getAuthorization() {
+			return 	"OAuth "+
+				    "oauth_consumer_key=" + "\"" + getParam("oauth_consumer_key") + "\"," + 
+				    "oauth_nonce=" + "\"" + getParam("oauth_nonce")+ "\"," + 
+				    "oauth_signature=" + "\"" + getSignature() + "\"," + 
+				    "oauth_signature_method=" + "\"" + getParam("oauth_signature_method") + "\"," +  
+				    "oauth_timestamp=" + "\"" + getParam("oauth_timestamp") + "\"," + 
+				    "oauth_token=" + "\"" + getParam("oauth_token") + "\"," + 
+				    "oauth_version=" + "\"" + getParam("oauth_version")+"\"";
+		}
+
+	}
 
 }

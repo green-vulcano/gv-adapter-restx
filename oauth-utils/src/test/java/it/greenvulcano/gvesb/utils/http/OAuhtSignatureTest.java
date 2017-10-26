@@ -40,7 +40,7 @@ public class OAuhtSignatureTest {
 								.addParam("oauth_version", "1.0")
 								.getSignature();
 		
-		Assert.assertEquals("hCtSmYh+iHYCEqBWrE7C7hYmtUk=", signature);
+		Assert.assertEquals("hCtSmYh%2BiHYCEqBWrE7C7hYmtUk%3D", signature);
 		
 		
 		signature = 	
@@ -57,7 +57,8 @@ public class OAuhtSignatureTest {
 										.addParam("oauth_version", "1.0")
 										.getSignature();
 				
-				Assert.assertEquals("hCtSmYh+iHYCEqBWrE7C7hYmtUk=", signature);
+		Assert.assertEquals("hCtSmYh%2BiHYCEqBWrE7C7hYmtUk%3D", signature);
+
 		OAuthSignatureBuilder.OAuthSignature s = OAuthSignatureBuilder.build("POST", "https://api.twitter.com/1.1/statuses/update.json", "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw", "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")
 				.addParam("status", "Hello Ladies + Gentlemen, a signed OAuth request!")
 				.addParam("include_entities", "true")

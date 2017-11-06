@@ -288,10 +288,8 @@ public class RestCallOperation implements CallOperation {
 	        	   gvBuffer.setObject(null);
 	           }
 	           
-	           gvBuffer.setProperty(RESPONSE_STATUS, "" + httpURLConnection.getResponseCode());
-	           gvBuffer.setProperty(RESPONSE_MESSAGE, httpURLConnection.getResponseMessage());
-	           
-	          	           
+	           gvBuffer.setProperty(RESPONSE_STATUS, String.valueOf(httpURLConnection.getResponseCode()));	           
+	           gvBuffer.setProperty(RESPONSE_MESSAGE, Optional.ofNullable(httpURLConnection.getResponseMessage()).orElse("NULL"));          	           
 	           
 	           httpURLConnection.disconnect();       	   
            

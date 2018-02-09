@@ -2,12 +2,17 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<name>GreenVulcano OAuth signature utility</name>
+
+    <parent>
+        <groupId>it.greenvulcano.gvesb</groupId>
+        <artifactId>gv-adapter-http</artifactId>
+        <version>4.0.0-SNAPSHOT</version>
+    </parent>
+
 	<groupId>it.greenvulcano.gvesb.adapter</groupId>
 	<artifactId>oauth-utils</artifactId>
-	<version>4.0.alpha1</version>
 	<packaging>bundle</packaging>
-
-	<name>GreenVulcano OAuth signature utility</name>
 
 	<properties>
 		<osgi.version>5.0.0</osgi.version>
@@ -16,7 +21,6 @@
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
 		<cloud.nexus.content>http://mvn.greenvulcano.com/nexus/content</cloud.nexus.content>
 	</properties>
-
 
   <repositories>
     <repository>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0"	name="${project.artifactId}-${project.version}">
+	<feature name="gv-multipart" description="GreenVulcano REST plugin" version="${project.version}">		  	
+		<bundle>mvn:org.apache.httpcomponents/httpcore-osgi/4.3.3</bundle>
+		<bundle>mvn:org.apache.httpcomponents/httpclient-osgi/4.3.6</bundle>
+		<bundle start-level="96">mvn:it.greenvulcano.gvesb.adapter/gv-multipart/${project.version}</bundle>
+	</feature>
+</features>

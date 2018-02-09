@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE GVCore SYSTEM "http://www.greenvulcano.com/gvesb/dtds/GVCore.dtd">
+
+<GVCore version="1.0">
+  <GVSystems name="SYSTEMS" type="module">
+    <Systems>
+		<System id-system="Multipart" system-activation="on">
+                <Channel endpoint="http://localhost:8888" id-channel="testMultipart" type="MultipartAdapter" enabled="true">
+                    <multipart-call name="testFilePart" type="call" request-uri="/testfilepart">
+                        <headers>
+                            <header name="charset" value="utf-8"/>
+                        </headers>
+                        <parts>                           
+                          <filePart name="filePart" 
+								filepath="@{{DIR}}/default.zip" 
+								filename="@{{DIR}}/default.zip"
+								contenttype="application/zip"/>
+                        </parts>
+                    </multipart-call>
+                    <multipart-call name="testStringPart" type="call" request-uri="/teststringpart">
+                        <headers>
+                            <header name="Authentication" value="Basic rnelgneo"/>
+                        </headers>
+                        <parts>                           
+                             <stringPart name="stringPart" contenttype="text/plain">
+							        <![CDATA[ProvaStringaLalalala]]> 
+	                         </stringPart>          
+                        </parts>
+                    </multipart-call>
+                    <multipart-call name="testFormPart" type="call" request-uri="/testformpart">
+                        <headers>
+                        	<header name="Content-Type" value="multipart"/>
+                            <header name="charset" value="utf-8"/>
+                        </headers>
+                        <parts>                           
+                            <formPart name="formPart" contenttype="text/plain">
+                                 <param name="Name" value="Ajeje"/>
+                                 <param name="Surname" value="Brazorf"/>
+                             </formPart>        
+                        </parts>
+                    </multipart-call>
+                    <multipart-call name="testByteArrayPart" type="call" request-uri="/testbytearraypart">
+                        <parts>                           
+                         	<byteArrayPart name="byteArrayPart" contenttype="application/zip" filename="bla.zip"/>
+                        </parts>
+                    </multipart-call>
+                </Channel>
+          </System>
+    </Systems>
+  </GVSystems>
+</GVCore>

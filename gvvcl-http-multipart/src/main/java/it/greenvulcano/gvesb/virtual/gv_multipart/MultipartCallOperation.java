@@ -134,6 +134,8 @@ public class MultipartCallOperation implements CallOperation {
     private File file;
 	private String fileName;
 	private boolean isByteArray = false;
+	private boolean isFileProperty = false;
+	private String filePartName;
 	
     /**
      * 
@@ -277,11 +279,17 @@ public class MultipartCallOperation implements CallOperation {
 	 * @param nodeList
 	 * @param name
 	 */
-    private void createFilePart(String PartName, String filePath, String fileName, String contentType) {
+    private void createFilePart(String partName, String filePath, String fileName, String contentType) {
     	this.contentType = getContentType(contentType);
-    	file = new File(filePath);
-    	FileBody filePart = new FileBody(file, this.contentType, fileName);
-    	multipartEntityBuilder.addPart(PartName, filePart);
+    	if(filePath.startsWith("@{{")) {
+        	isFileProperty = true;
+        	filePartName = partName;
+    		
+    	}else {
+	    	file = new File(filePath);
+	    	FileBody filePart = new FileBody(file, this.contentType, fileName);
+	    	multipartEntityBuilder.addPart(partName, filePart);
+    	}
 	}
 
 	/**
@@ -294,7 +302,6 @@ public class MultipartCallOperation implements CallOperation {
 		this.contentType = getContentType(contentType);
 	        Element element = (Element) nodeList.item(0);
 
-//    	StringBody stringPart = new StringBody(getCharacterDataFromElement(element), this.contentType);
     	multipartEntityBuilder.addTextBody(name, getCharacterDataFromElement(element),this.contentType);  		
 	 }
     
@@ -388,6 +395,12 @@ public class MultipartCallOperation implements CallOperation {
         	ByteArrayBody byteArrayPart = new ByteArrayBody(requestData, contentType, fileName);
         	multipartEntityBuilder.addPart(name, byteArrayPart);
 		}
+		
+		else if (isFileProperty == true) {
+	    	file = new File(gvBuffer.getProperty("DIR"));
+	    	FileBody filePart = new FileBody(file, this.contentType, fileName);
+	    	multipartEntityBuilder.addPart(filePartName, filePart);
+		}
 
         try {
         	CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -428,7 +441,7 @@ public class MultipartCallOperation implements CallOperation {
 		        	   gvBuffer.setObject(responseData);   
 		           }
 				
-	           } else { // No content
+	           } else { 
 	        	   gvBuffer.setObject(null);
 	           }
 	           
@@ -437,19 +450,6 @@ public class MultipartCallOperation implements CallOperation {
 	           
 	           callDump.append("\n " +gvBuffer);
 
-//      	   byte[] responseData = IOUtils.toByteArray(response.getEntity().toString());
-// 	           String responseContentType = Optional.ofNullable(gvBuffer.getProperty(RESPONSE_HEADER_PREFIX.concat("CONTENT-TYPE"))).orElse("");
-// 	           
-// 	           if (responseContentType.startsWith("application/json") || responseContentType.startsWith("application/javascript") ) {
-// 	        	   gvBuffer.setObject(new String(responseData, "UTF-8"));
-// 	           } else {
-// 	        	   gvBuffer.setObject(response);   
-// 	           }
-//
-//	           gvBuffer.setProperty(RESPONSE_STATUS, String.valueOf(response.getStatusLine()));	           
-//	           gvBuffer.setProperty(RESPONSE_MESSAGE, Optional.ofNullable(httpURLConnection.getResponseMessage()).orElse("NULL"));          	           
-        	
-        	
         	response.close();
 
         	

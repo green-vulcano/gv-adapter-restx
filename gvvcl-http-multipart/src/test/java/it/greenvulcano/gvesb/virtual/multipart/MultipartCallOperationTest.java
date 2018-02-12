@@ -1,7 +1,6 @@
 package it.greenvulcano.gvesb.virtual.multipart;
 
-import static org.junit.Assert.fail;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -45,7 +44,7 @@ public class MultipartCallOperationTest {
 					return payloadByteArray;
 				});
 				routes.post("/testfilepart", (context) -> {
-					if(context.request().parts().get(0).fileName().equals("blaf_20171004140932.zip")
+					if(context.request().parts().get(0).fileName().equals("default.zip")
 							&& context.request().parts().get(0).contentType().equals("application/zip")
 							&& context.request().parts().get(0).isFile() == true){
 						payloadFile =  new Payload("Test MultipartFile ok");
@@ -69,14 +68,12 @@ public class MultipartCallOperationTest {
 					return payloadForm;
 				});
 			}).start(8888);
-			
-			
 	}
 	
 	@Test
 	public void testMultipartByteArray() throws XMLConfigException, GVException, InterruptedException, IOException, URISyntaxException{
 		
-		Node node = XMLConfig.getNode("GVSystems.xml", "//*[@name='testByteArrayPart']");		
+		Node node = XMLConfig.getNode("GVCore.xml", "//*[@name='testByteArrayPart']");		
 		CallOperation callOperation = new MultipartCallOperation();
 		callOperation.init(node);
 		
@@ -89,28 +86,26 @@ public class MultipartCallOperationTest {
 		Assert.assertEquals("Test MultipartByteArray ok", payloadByteArray.rawContent());
 	}
 	
-	// TODO: da aggiustare @Test
-	public void testMultipartFile() {
-		try {
-			Node node = XMLConfig.getNode("GVSystems.xml", "//*[@name='testFilePart']");		
-			CallOperation callOperation = new MultipartCallOperation();
-			callOperation.init(node);
-			
-			GVBuffer gvbuffer = new GVBuffer("Multipart", "testMultipart");
-            gvbuffer.setProperty("DIR", getClass().getClassLoader().getResource(".").getPath());					
-			Assert.assertNull(gvbuffer.getObject());		
-			callOperation.perform(gvbuffer);
-			Assert.assertEquals("Test MultipartFile ok", payloadFile.rawContent());
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail();
-		}
+	@Test
+	public void testMultipartFile() throws XMLConfigException, GVException, InterruptedException, URISyntaxException{
+		Node node = XMLConfig.getNode("GVCore.xml", "//*[@name='testFilePart']");		
+		CallOperation callOperation = new MultipartCallOperation();
+		callOperation.init(node);
+
+		GVBuffer gvbuffer = new GVBuffer("Multipart", "testMultipart");
+		Path path = Paths.get(getClass().getClassLoader().getResource("default.zip").toURI());
+		gvbuffer.setProperty("DIR", path.toString());
+
+		System.out.println("test property" + gvbuffer.getProperty("DIR"));
+		Assert.assertNull(gvbuffer.getObject());	
+		callOperation.perform(gvbuffer);
+		Assert.assertEquals("Test MultipartFile ok", payloadFile.rawContent());
 		
 	}
 
 	@Test
 	public void testMultipartString() throws XMLConfigException, GVException, InterruptedException{
-		Node node = XMLConfig.getNode("GVSystems.xml", "//*[@name='testStringPart']");		
+		Node node = XMLConfig.getNode("GVCore.xml", "//*[@name='testStringPart']");		
 		CallOperation callOperation = new MultipartCallOperation();
 		callOperation.init(node);
 		
@@ -124,7 +119,7 @@ public class MultipartCallOperationTest {
 
 	@Test
 	public void testMultipartForm() throws XMLConfigException, GVException, InterruptedException{
-		Node node = XMLConfig.getNode("GVSystems.xml", "//*[@name='testFormPart']");		
+		Node node = XMLConfig.getNode("GVCore.xml", "//*[@name='testFormPart']");		
 		CallOperation callOperation = new MultipartCallOperation();
 		callOperation.init(node);
 		

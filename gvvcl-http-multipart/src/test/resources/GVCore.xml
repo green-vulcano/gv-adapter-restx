@@ -13,8 +13,8 @@
                         </headers>
                         <parts>                           
                           <filePart name="filePart" 
-								filepath="@{{DIR}}/default.zip" 
-								filename="@{{DIR}}/default.zip"
+								filepath="@{{DIR}}" 
+								filename="default.zip"
 								contenttype="application/zip"/>
                         </parts>
                     </multipart-call>

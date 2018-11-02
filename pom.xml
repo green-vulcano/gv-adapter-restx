@@ -4,7 +4,7 @@
 
   <groupId>it.greenvulcano.gvesb</groupId>
   <artifactId>gv-adapter-http</artifactId>
-  <version>4.0.beta1</version>
+  <version>4.0.0</version>
   <packaging>pom</packaging>
 
   <name>GreenVulcano ESB HTTP Adapter</name>
@@ -16,7 +16,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<gvesb.version>4.0.beta1</gvesb.version>
+	<gvesb.version>4.0.0</gvesb.version>
     <maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
     <jacoco-maven-plugin.version>0.7.7.201606060606</jacoco-maven-plugin.version>
     <maven-bundle-plugin.version>3.2.0</maven-bundle-plugin.version>

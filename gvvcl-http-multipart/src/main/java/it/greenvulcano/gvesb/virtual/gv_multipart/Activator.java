@@ -21,19 +21,14 @@ package it.greenvulcano.gvesb.virtual.gv_multipart;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import it.greenvulcano.gvesb.virtual.OperationFactory;
 
 /**
  * 
- * @version 4.0 november/2017
+ * @version 4.1 march/2019
  * @author GreenVulcano Developer Team
  */
 public class Activator implements BundleActivator {
-	
-	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
 	@Override
 	public void start(BundleContext context) throws Exception {

@@ -158,7 +158,7 @@
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Export-Package />
 						<Import-Package>*</Import-Package>
-						<Bundle-Activator>it.greenvulcano.gvesb.virtual.gv_multipart.Activator</Bundle-Activator>
+						<Bundle-Activator>it.greenvulcano.gvesb.virtual.multipart.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>
 			</plugin>

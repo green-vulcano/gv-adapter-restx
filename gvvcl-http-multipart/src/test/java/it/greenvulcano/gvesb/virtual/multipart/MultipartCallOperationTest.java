@@ -17,7 +17,7 @@ import it.greenvulcano.configuration.XMLConfigException;
 import it.greenvulcano.gvesb.buffer.GVBuffer;
 import it.greenvulcano.gvesb.buffer.GVException;
 import it.greenvulcano.gvesb.virtual.CallOperation;
-import it.greenvulcano.gvesb.virtual.gv_multipart.MultipartCallOperation;
+import it.greenvulcano.gvesb.virtual.multipart.MultipartCallOperation;
 import net.codestory.http.WebServer;
 import net.codestory.http.payload.Payload;
 

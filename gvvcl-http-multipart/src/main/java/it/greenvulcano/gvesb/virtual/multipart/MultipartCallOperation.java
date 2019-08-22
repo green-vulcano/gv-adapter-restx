@@ -35,9 +35,11 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.FormBodyPartBuilder;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -188,6 +190,25 @@ public class MultipartCallOperation implements CallOperation {
                 Node partNode = parts.item(i);
                 String name = PropertiesHandler.expand(XMLConfig.get(partNode, "@name"), gvBuffer);
 
+                
+                FormBodyPartBuilder partBuilder = FormBodyPartBuilder.create();
+                partBuilder.setName(name);
+                               
+                if (XMLConfig.exists(partNode, "./headers")) {
+                    Map<String, String> partHeaders = new LinkedHashMap<>();
+                    
+                    fillMap(XMLConfig.getNodeList(partNode, "./headers/header"), partHeaders);
+                    
+                    for (Entry<String, String> header : partHeaders.entrySet()) {
+                        String key = PropertiesHandler.expand(header.getKey(), gvBuffer);
+                        String value = PropertiesHandler.expand(header.getValue(), gvBuffer);
+                        
+                        partBuilder.setField(key, value);
+                        
+                    }
+
+                }
+                
                 switch (partNode.getNodeName()) {
 
                     case "filePart": {
@@ -196,8 +217,9 @@ public class MultipartCallOperation implements CallOperation {
                         String fileName = PropertiesHandler.expand(XMLConfig.get(partNode, "@filename"), gvBuffer);
                         String fileContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
     
-                        FileBody filePart = new FileBody(new File(filePath), ContentType.parse(fileContentType), fileName);
-                        multipartEntityBuilder.addPart(name, filePart);
+                        FileBody filePart = new FileBody(new File(filePath), ContentType.parse(fileContentType), fileName);                        
+                        partBuilder.setBody(filePart);
+                        
                         break;
                     }
     
@@ -205,7 +227,9 @@ public class MultipartCallOperation implements CallOperation {
                         String stringContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
                         String stringContent = PropertiesHandler.expand(partNode.getTextContent(), gvBuffer);
     
-                        multipartEntityBuilder.addTextBody(name, stringContent, ContentType.parse(stringContentType));
+                        StringBody stringPart = new StringBody(stringContent, ContentType.parse(stringContentType));                        
+                        partBuilder.setBody(stringPart);
+                        
                         break;
                     }
     
@@ -221,7 +245,9 @@ public class MultipartCallOperation implements CallOperation {
                             params.add(URLEncoder.encode(key, "UTF-8").concat("=").concat(URLEncoder.encode(value, "UTF-8")));
                         }
     
-                        multipartEntityBuilder.addTextBody(name, params.stream().collect(Collectors.joining("&")), ContentType.APPLICATION_FORM_URLENCODED);
+                        StringBody formPart = new StringBody(params.stream().collect(Collectors.joining("&")), ContentType.APPLICATION_FORM_URLENCODED);                        
+                        partBuilder.setBody(formPart);
+                        
                         break;
                     }
     
@@ -237,13 +263,16 @@ public class MultipartCallOperation implements CallOperation {
                         }
     
                         ByteArrayBody byteArrayPart = new ByteArrayBody(requestData, ContentType.parse(binaryPartContentType), binaryPartfileName);
-                        multipartEntityBuilder.addPart(name, byteArrayPart);
+                        partBuilder.setBody(byteArrayPart);
     
                         break;
     
                     }
 
                 }
+                
+                
+                multipartEntityBuilder.addPart(partBuilder.build());
 
             }
 
@@ -257,8 +286,8 @@ public class MultipartCallOperation implements CallOperation {
             RequestConfig config = RequestConfig.custom().setConnectTimeout(connectionTimeout).setSocketTimeout(readTimeout).build();
 
             for (Entry<String, String> header : headers.entrySet()) {
-                String key = PropertiesHandler.expand(header.getKey());
-                String value = PropertiesHandler.expand(header.getValue());
+                String key = PropertiesHandler.expand(header.getKey(), gvBuffer);
+                String value = PropertiesHandler.expand(header.getValue(), gvBuffer);
                 httpPost.setHeader(key, value);
                 callDump.append("\n        ").append("Header: " + key + "=" + value);
             }

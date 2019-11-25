@@ -5,7 +5,7 @@
     <parent>
         <groupId>it.greenvulcano.gvesb</groupId>
         <artifactId>gv-adapter-http</artifactId>
-        <version>4.0.1</version>
+        <version>4.1.0-SNAPSHOT</version>
     </parent>
 
 	<groupId>it.greenvulcano.gvesb.adapter</groupId>
@@ -111,7 +111,8 @@
 							org.apache.commons.io,
 							org.osgi.framework;version="[1.7,2)",
 							org.slf4j;version="[1.6,2)";provider=paxlogging,
-							org.w3c.dom;version="[1.0.0,2)
+							org.w3c.dom,
+							javax.net.ssl
 						</Import-Package>
 						<Bundle-Activator>it.greenvulcano.gvesb.virtual.rest.Activator</Bundle-Activator>
 					</instructions>

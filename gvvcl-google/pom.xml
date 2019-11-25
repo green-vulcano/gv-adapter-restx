@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>it.greenvulcano.gvesb</groupId>
 		<artifactId>gv-adapter-http</artifactId>
-		<version>4.0.1</version>
+		<version>4.1.0-SNAPSHOT</version>
 	</parent>
 
 	<groupId>it.greenvulcano.gvesb.adapter</groupId>
@@ -17,7 +17,6 @@
 
 	<properties>
 		<osgi.version>5.0.0</osgi.version>
-		<gvesb.version>4.0.0</gvesb.version>
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
 		<cloud.nexus.content>http://mvn.greenvulcano.com/nexus/content</cloud.nexus.content>

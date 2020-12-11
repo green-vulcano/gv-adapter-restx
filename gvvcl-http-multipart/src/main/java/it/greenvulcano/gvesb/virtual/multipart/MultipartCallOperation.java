@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +51,7 @@ import org.w3c.dom.NodeList;
 
 import it.greenvulcano.configuration.XMLConfig;
 import it.greenvulcano.gvesb.buffer.GVBuffer;
+import it.greenvulcano.gvesb.internal.data.GVBufferPropertiesHelper;
 import it.greenvulcano.gvesb.virtual.CallException;
 import it.greenvulcano.gvesb.virtual.CallOperation;
 import it.greenvulcano.gvesb.virtual.ConnectionException;
@@ -177,101 +179,110 @@ public class MultipartCallOperation implements CallOperation {
     @Override
     public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
 
+        final GVBufferPropertyFormatter formatter = new GVBufferPropertyFormatter(gvBuffer);
         try {
-            String actualURL = PropertiesHandler.expand(url, gvBuffer);
+            String actualURL = formatter.format(url);
+            if (!params.isEmpty()) {
+
+               
+                String querystring = params.entrySet()
+                                           .stream()
+                                           .map(e -> formatter.formatAndEncode(e.getKey()) + "=" + formatter.formatAndEncode(e.getValue()))
+                                           .collect(Collectors.joining("&"));
+
+                actualURL = actualURL.concat("?").concat(querystring);
+            }
 
             StringBuffer callDump = new StringBuffer();
-            callDump.append("Performing RestCallOperation " + name).append("\n        ").append("URL: ").append(actualURL);
+            callDump.append("Performing MultipartCallOperation " + name).append("\n        ").append("URL: ").append(actualURL);
 
             MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-
+           
             for (int i = 0; i < parts.getLength(); i++) {
 
                 Node partNode = parts.item(i);
                 String name = PropertiesHandler.expand(XMLConfig.get(partNode, "@name"), gvBuffer);
 
-                
                 FormBodyPartBuilder partBuilder = FormBodyPartBuilder.create();
                 partBuilder.setName(name);
-                               
+
                 if (XMLConfig.exists(partNode, "./headers")) {
                     Map<String, String> partHeaders = new LinkedHashMap<>();
-                    
+
                     fillMap(XMLConfig.getNodeList(partNode, "./headers/header"), partHeaders);
-                    
+
                     for (Entry<String, String> header : partHeaders.entrySet()) {
                         String key = PropertiesHandler.expand(header.getKey(), gvBuffer);
                         String value = PropertiesHandler.expand(header.getValue(), gvBuffer);
-                        
+
                         partBuilder.setField(key, value);
-                        
+
                     }
 
                 }
-                
+
                 switch (partNode.getNodeName()) {
 
-                    case "filePart": {
-    
-                        String filePath = PropertiesHandler.expand(XMLConfig.get(partNode, "@filepath"), gvBuffer);
-                        String fileName = PropertiesHandler.expand(XMLConfig.get(partNode, "@filename"), gvBuffer);
-                        String fileContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
-    
-                        FileBody filePart = new FileBody(new File(filePath), ContentType.parse(fileContentType), fileName);                        
-                        partBuilder.setBody(filePart);
-                        
-                        break;
-                    }
-    
-                    case "stringPart": {
-                        String stringContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
-                        String stringContent = PropertiesHandler.expand(partNode.getTextContent(), gvBuffer);
-    
-                        StringBody stringPart = new StringBody(stringContent, ContentType.parse(stringContentType));                        
-                        partBuilder.setBody(stringPart);
-                        
-                        break;
-                    }
-    
-                    case "formPart": {
-    
-                        NodeList formParams = XMLConfig.getNodeList(partNode, "./param");
-                        Set<String> params = new LinkedHashSet<>();
-                        for (int n = 0; n < formParams.getLength(); n++) {
-                            Node paramNode = formParams.item(n);
-                            String key = PropertiesHandler.expand(XMLConfig.get(paramNode, "@name"), gvBuffer);
-                            String value = PropertiesHandler.expand(XMLConfig.get(paramNode, "@value"), gvBuffer);
-    
-                            params.add(URLEncoder.encode(key, "UTF-8").concat("=").concat(URLEncoder.encode(value, "UTF-8")));
-                        }
-    
-                        StringBody formPart = new StringBody(params.stream().collect(Collectors.joining("&")), ContentType.APPLICATION_FORM_URLENCODED);                        
-                        partBuilder.setBody(formPart);
-                        
-                        break;
-                    }
-    
-                    case "byteArrayPart": {
-                        String binaryPartfileName = PropertiesHandler.expand(XMLConfig.get(partNode, "@filename"), gvBuffer);
-                        String binaryPartContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
-    
-                        byte[] requestData;
-                        if (gvBuffer.getObject() instanceof byte[]) {
-                            requestData = (byte[]) gvBuffer.getObject();
-                        } else {
-                            requestData = gvBuffer.getObject().toString().getBytes();
-                        }
-    
-                        ByteArrayBody byteArrayPart = new ByteArrayBody(requestData, ContentType.parse(binaryPartContentType), binaryPartfileName);
-                        partBuilder.setBody(byteArrayPart);
-    
-                        break;
-    
+                case "filePart": {
+
+                    String filePath = PropertiesHandler.expand(XMLConfig.get(partNode, "@filepath"), gvBuffer);
+                    String fileName = PropertiesHandler.expand(XMLConfig.get(partNode, "@filename"), gvBuffer);
+                    String fileContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
+
+                    FileBody filePart = new FileBody(new File(filePath), ContentType.parse(fileContentType), fileName);
+                    partBuilder.setBody(filePart);
+
+                    break;
+                }
+
+                case "stringPart": {
+                    String stringContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
+                    String stringContent = PropertiesHandler.expand(partNode.getTextContent(), gvBuffer);
+
+                    StringBody stringPart = new StringBody(stringContent, ContentType.parse(stringContentType));
+                    partBuilder.setBody(stringPart);
+
+                    break;
+                }
+
+                case "formPart": {
+
+                    NodeList formParams = XMLConfig.getNodeList(partNode, "./param");
+                    Set<String> params = new LinkedHashSet<>();
+                    for (int n = 0; n < formParams.getLength(); n++) {
+                        Node paramNode = formParams.item(n);
+                        String key = PropertiesHandler.expand(XMLConfig.get(paramNode, "@name"), gvBuffer);
+                        String value = PropertiesHandler.expand(XMLConfig.get(paramNode, "@value"), gvBuffer);
+
+                        params.add(URLEncoder.encode(key, "UTF-8").concat("=").concat(URLEncoder.encode(value, "UTF-8")));
                     }
 
+                    StringBody formPart = new StringBody(params.stream().collect(Collectors.joining("&")), ContentType.APPLICATION_FORM_URLENCODED);
+                    partBuilder.setBody(formPart);
+
+                    break;
                 }
-                
-                
+
+                case "byteArrayPart": {
+                    String binaryPartfileName = PropertiesHandler.expand(XMLConfig.get(partNode, "@filename"), gvBuffer);
+                    String binaryPartContentType = PropertiesHandler.expand(XMLConfig.get(partNode, "@contenttype"), gvBuffer);
+
+                    byte[] requestData;
+                    if (gvBuffer.getObject() instanceof byte[]) {
+                        requestData = (byte[]) gvBuffer.getObject();
+                    } else {
+                        requestData = gvBuffer.getObject().toString().getBytes();
+                    }
+
+                    ByteArrayBody byteArrayPart = new ByteArrayBody(requestData, ContentType.parse(binaryPartContentType), binaryPartfileName);
+                    partBuilder.setBody(byteArrayPart);
+
+                    break;
+
+                }
+
+                }
+
                 multipartEntityBuilder.addPart(partBuilder.build());
 
             }
@@ -322,6 +333,43 @@ public class MultipartCallOperation implements CallOperation {
                                     exc);
         }
         return gvBuffer;
+    }
+
+    private class GVBufferPropertyFormatter {
+
+        private final GVBuffer gvBuffer;
+        private Map<String, Object> params;
+
+        public GVBufferPropertyFormatter(GVBuffer gvBuffer) {
+
+            this.gvBuffer = gvBuffer;
+        }
+
+        String format(String entry) {
+
+            try {
+                if (Objects.isNull(params)) {
+                    params = GVBufferPropertiesHelper.getPropertiesMapSO(gvBuffer, true);
+                }
+
+                return PropertiesHandler.expand(entry, params, gvBuffer.getObject());
+            } catch (Exception exception) {
+                logger.error("Error formatting value: " + entry, exception);
+            }
+            return entry;
+        }
+
+        String formatAndEncode(String entry) {
+
+            String value = format(entry);
+            try {
+                return URLEncoder.encode(value, "UTF-8");
+            } catch (Exception exception) {
+                logger.error("Error encoding value: " + entry, exception);
+            }
+            return entry;
+        }
+
     }
 
     @Override

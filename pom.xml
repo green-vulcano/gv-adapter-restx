@@ -25,7 +25,7 @@
 
 		<version.osgi>5.0.0</version.osgi>
 		<version.pax-logging>1.9.1</version.pax-logging>
-		<version.junit>4.11</version.junit>
+		<version.junit>4.13.1</version.junit>
 
 		<cloud.nexus.content>http://mvn.greenvulcano.com/nexus/content</cloud.nexus.content>
 	</properties>

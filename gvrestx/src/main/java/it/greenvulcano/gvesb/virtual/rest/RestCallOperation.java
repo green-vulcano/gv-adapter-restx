@@ -114,7 +114,7 @@ public class RestCallOperation implements CallOperation {
             Node trustStore = XMLConfig.getNode(node.getParentNode(), "./truststore");
             if (Objects.nonNull(trustStore)) {
                 truststorePath = XMLConfig.get(trustStore, "@path");
-                truststoreType = XMLConfig.get(trustStore, "@type");
+                truststoreType = XMLConfig.get(trustStore, "@type", null);
                 truststorePassword = XMLConfig.getDecrypted(trustStore, "@password", null);
                 truststoreAlgorithm = XMLConfig.get(trustStore, "@algorithm", null);
             }
@@ -122,7 +122,7 @@ public class RestCallOperation implements CallOperation {
             Node keystStore = XMLConfig.getNode(node.getParentNode(), "./keystore");
             if (Objects.nonNull(keystStore)) {
                 keystorePath = XMLConfig.get(keystStore, "@path");
-                keystoreType = XMLConfig.get(keystStore, "@type");
+                keystoreType = XMLConfig.get(keystStore, "@type", null);
                 keystorePassword = XMLConfig.getDecrypted(keystStore, "@password", null);
                 keystoreAlgorithm = XMLConfig.get(keystStore, "@algorithm", null);
             }
